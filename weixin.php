@@ -64,11 +64,22 @@ PDOc::_connect();
       self::responseTranslate($postObj);
       self::responseBaike($postObj);
       self::responseFeedback($postObj);
+      self::responseAddDP($postObj);
+      self::responseAddWP($postObj);
+      self::responseDelDP($postObj);
+      self::responseDelWP($postObj);
       //self::responseRegister($postObj);
       //self::responseClose($postObj);
-      $keyword='物术报名';
-      $filename='log/physicSignUp.txt';
+      $keyword='主赛日报名';
+      $filename='log/zhusairiSignUp.txt';
       self::responseSignUp($postObj,$keyword,$filename);
+      $keyword='三人篮报名';
+      $filename='log/sanrenlanSignUp.txt';
+      self::responseSignUp($postObj,$keyword,$filename);
+      $keyword='查看报名';
+      $Content="主赛日：\r\n".self::readFile('log/zhusairiSignUp.txt');
+      $Content.="三人篮：\r\n". self::readFile('log/sanrenlanSignUp.txt');
+      self::responseText($postObj,$keyword,$Content);
     }
 
 
@@ -104,6 +115,117 @@ PDOc::_connect();
             $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
             echo $info;
           }
+    }
+
+
+    public static function responseAddDP($postObj){
+      $weixinID=$postObj->FromUserName;
+      if ($weixinID=="oKldy5yGdkZnvBJOKH8C7hYRql4U") {
+        $str=$postObj->Content;
+        $pattern=$pattern='/^加德育分 ([^ ]*?) ([^ ]*?) (.*)$/';
+        if (preg_match($pattern,$str)<>0) {
+          $point=preg_replace($pattern,'$1',$str);
+          $info=preg_replace($pattern,'$2',$str);
+          $names=preg_replace($pattern,'$3',$str);
+          if (strtolower($names)=='all') $names=PDOc::getAllUsernames();
+          $pattern='/([^ ]+)/';
+          $arr=array();
+          $X=preg_match_all($pattern,$names,$arr);
+          $res=0;
+          foreach ($arr[0] as $row) {
+            $res+=PDOc::addDP($row,$point,$info);
+          }
+          $Content="Done.\r\n".$res." rows affected.";
+          $toUser=$postObj->FromUserName;
+          $fromUser=$postObj->ToUserName;
+          $time=time();
+          $MsgType='text';
+          $template=self::$textTemplate;
+          $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+          echo $info;
+        }
+      }
+    }
+          
+    public static function responseDelDP($postObj){
+      $weixinID=$postObj->FromUserName;
+      if ($weixinID=="oKldy5yGdkZnvBJOKH8C7hYRql4U") {
+        $str=$postObj->Content;
+        $pattern=$pattern='/^删除 德育分 (.*)$/';
+        if (preg_match($pattern,$str)<>0) {
+          $IDs=preg_replace($pattern,'$1',$str);
+          $pattern='/([^ ]+)/';
+          $arr=array();
+          $X=preg_match_all($pattern,$IDs,$arr);
+          $res=0;
+          foreach ($arr[0] as $row) {
+            $res+=PDOc::delDP($row);
+          }
+          $Content="Done.\r\n".$res." rows affected.";
+          $toUser=$postObj->FromUserName;
+          $fromUser=$postObj->ToUserName;
+          $time=time();
+          $MsgType='text';
+          $template=self::$textTemplate;
+          $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+          echo $info;
+        }
+      }
+    }
+
+    public static function responseAddWP($postObj){
+      $weixinID=$postObj->FromUserName;
+      if ($weixinID=="oKldy5yGdkZnvBJOKH8C7hYRql4U") {
+        $str=$postObj->Content;
+        $pattern=$pattern='/^加文体分 ([^ ]*?) ([^ ]*?) (.*)$/';
+        if (preg_match($pattern,$str)<>0) {
+          $point=preg_replace($pattern,'$1',$str);
+          $info=preg_replace($pattern,'$2',$str);
+          $names=preg_replace($pattern,'$3',$str);
+          if (strtolower($names)=='all') $names=PDOc::getAllUsernames();
+          $pattern='/([^ ]+)/';
+          $arr=array();
+          $X=preg_match_all($pattern,$names,$arr);
+          $res=0;
+          foreach ($arr[0] as $row) {
+            $res+=PDOc::addWP($row,$point,$info);
+          }
+          $Content="Done.\r\n".$res." rows affected.";
+          $toUser=$postObj->FromUserName;
+          $fromUser=$postObj->ToUserName;
+          $time=time();
+          $MsgType='text';
+          $template=self::$textTemplate;
+          $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+          echo $info;
+        }
+      }
+    }
+          
+    public static function responseDelWP($postObj){
+      $weixinID=$postObj->FromUserName;
+      if ($weixinID=="oKldy5yGdkZnvBJOKH8C7hYRql4U") {
+        $str=$postObj->Content;
+        $pattern=$pattern='/^删除 文体分 (.*)$/';
+        if (preg_match($pattern,$str)<>0) {
+          $IDs=preg_replace($pattern,'$1',$str);
+          $pattern='/([^ ]+)/';
+          $arr=array();
+          $X=preg_match_all($pattern,$IDs,$arr);
+          $res='';
+          foreach ($arr[0] as $row) {
+            $res.=PDOc::delWP($row);
+          }
+          $Content="Done.\r\n".$res." rows affected.";
+          $toUser=$postObj->FromUserName;
+          $fromUser=$postObj->ToUserName;
+          $time=time();
+          $MsgType='text';
+          $template=self::$textTemplate;
+          $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+          echo $info;
+        }
+      }
     }
     
     public static function responseWeather($postObj){
@@ -439,7 +561,7 @@ PDOc::_connect();
    	return $res;
     }
             
-    public static function getTranslate($keyword){
+   public static function getTranslate($keyword){
    $res='';
    $url='http://cn.bing.com/dict/search?q='.urlencode($keyword);
    $html=file_get_html($url);
@@ -453,7 +575,6 @@ PDOc::_connect();
    $html->clear();
    return $res;
    }
-   
    
    public static function getBaike($keyword){
    $res='';
@@ -476,7 +597,7 @@ PDOc::_connect();
    
 
     public static function record($postObj){
-      $filename='log/log2.txt';
+      $filename='log/log3.txt';
       $fileContent=date("Y-m-d H:i:s",time()).' '.PDOc::getUsername($postObj->FromUserName).' '.$postObj->Content;
       file_put_contents($filename,$fileContent."\r\n",FILE_APPEND);
     }

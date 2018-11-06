@@ -44,6 +44,13 @@ class PDOc{
       foreach ($stmt as $row) if ($row['weixinID'] == $weixinID) return true;
       return false;
     }
+
+    public static function checkUsernameExistence($username){
+      $sql="SELECT * FROM user;";
+      $stmt=self::$link->query($sql);
+      foreach ($stmt as $row) if ($row['username'] == $username) return true;
+      return false;
+    }
       
 
     public static function getUsername($weixinID){
@@ -53,6 +60,24 @@ class PDOc{
         foreach ($stmt as $row) if ($row['weixinID'] == $weixinID) return $row['username'];
       } else {
         return "Unknown(".$weixinID.")";
+      }
+    }
+        
+    public static function getAllUsernames(){
+    	$sql="SELECT username FROM user";
+    	$stmt=self::$link->query($sql);
+      $res='';
+      foreach ($stmt as $row) $res.=$row['username'].' ';
+      return $res;
+    }
+
+    public static function getweixinID($username){
+      if (self::checkUsernameExistence($username)) {
+        $sql="SELECT * FROM user;";
+        $stmt=self::$link->query($sql);
+        foreach ($stmt as $row) if ($row['username'] == $username) return $row['weixinID'];
+      } else {
+        return "Unknown(".$username.")";
       }
     }
 
@@ -69,6 +94,14 @@ class PDOc{
       if (preg_match($pattern,$str)<>0) return self::findMyselfAll($weixinID);
       $pattern='/^查询 老乡$/';
       if (preg_match($pattern,$str)<>0) return self::findMyLaoxiang($weixinID);
+      $pattern='/^查询 德育分$/';
+      if (preg_match($pattern,$str)<>0) return self::checkMyDP($weixinID);
+      $pattern='/^查询 文体分$/';
+      if (preg_match($pattern,$str)<>0) return self::checkMyWP($weixinID);
+      $pattern='/^查询 德育分 (.*)$/';
+      if (preg_match($pattern,$str)<>0) return self::checkOneDP(preg_replace($pattern,'$1',$str));
+      $pattern='/^查询 文体分 (.*)$/';
+      if (preg_match($pattern,$str)<>0) return self::checkOneWP(preg_replace($pattern,'$1',$str));
       return '格式错误.';
      }
       
@@ -83,6 +116,10 @@ class PDOc{
       if (preg_match($pattern,$str)<>0) return self::findMyselfAll($weixinID);
       $pattern='/^查询 老乡$/';
       if (preg_match($pattern,$str)<>0) return self::findMyLaoxiang($username);
+      $pattern='/^查询 德育分$/';
+      if (preg_match($pattern,$str)<>0) return self::checkMyDP($weixinID);
+      $pattern='/^查询 文体分$/';
+      if (preg_match($pattern,$str)<>0) return self::checkMyWP($weixinID);
       return '格式错误.';
      }
 
@@ -185,5 +222,97 @@ class PDOc{
         return $res."查询结束.";
       }
   	 }
+
+    public static function checkMyDP($weixinID){
+      $sql="SELECT * FROM dp WHERE weixinID='{$weixinID}';";
+      $stmt=self::$link->query($sql);
+      $res='';
+      foreach ($stmt as $row) {
+        $res.='ID:'.$row['dpID'].'/'.$row['point'].'分/'.$row['info']."\r\n";
+      }
+      if ($res=='') {
+        return '尚无记录';
+      } else {
+        return $res."查询结束.";
+      }
+    }
+
+    public static function checkMyWP($weixinID){
+      $sql="SELECT * FROM wp WHERE weixinID='{$weixinID}';";
+      $stmt=self::$link->query($sql);
+      $res='';
+      foreach ($stmt as $row) {
+        $res.='ID:'.$row['wpID'].'/'.$row['point'].'分/'.$row['info']."\r\n";
+      }
+      if ($res=='') {
+        return '尚无记录';
+      } else {
+        return $res."查询结束.";
+      }
+    }
+
+    public static function checkOneDP($username){
+      $weixinID=self::getWeixinID($username);
+      $sql="SELECT * FROM dp WHERE weixinID='{$weixinID}';";
+      $stmt=self::$link->query($sql);
+      $res='';
+      foreach ($stmt as $row) {
+        $res.='ID:'.$row['dpID'].'/'.$row['point'].'分/'.$row['info']."\r\n";
+      }
+      if ($res=='') {
+        return '尚无记录';
+      } else {
+        return $res."查询结束.";
+      }
+    }
+
+    public static function checkOneWP($username){
+      $weixinID=self::getWeixinID($username);
+      $sql="SELECT * FROM wp WHERE weixinID='{$weixinID}';";
+      $stmt=self::$link->query($sql);
+      $res='';
+      foreach ($stmt as $row) {
+        $res.='ID:'.$row['wpID'].'/'.$row['point'].'分/'.$row['info']."\r\n";
+      }
+      if ($res=='') {
+        return '尚无记录';
+      } else {
+        return $res."查询结束.";
+      }
+    }
+
+    public static function addDP($username,$point,$info){
+      $weixinID=self::getWeixinID($username);
+      $res=0;
+      $pattern='/Unknown/';
+      if (preg_match($pattern,$weixinID)==0){
+        $sql="INSERT INTO dp(weixinID,point,info) VALUES('{$weixinID}','{$point}','{$info}');";
+        $res+=self::$link->exec($sql);
+      }
+      return $res;
+    }
+        
+    public static function delDP($dpID){
+      $sql="DELETE FROM dp WHERE dpID='{$dpID}';";
+      $res=self::$link->exec($sql);
+      return $res;
+    }
+
+    public static function addWP($username,$point,$info){
+      $weixinID=self::getWeixinID($username);
+      $res=0;
+      $pattern='/Unknown/';
+      if (preg_match($pattern,$weixinID)==0){
+        $sql="INSERT INTO wp(weixinID,point,info) VALUES('{$weixinID}','{$point}','{$info}');";
+        $res+=self::$link->exec($sql);
+      }
+      return $res;
+    }
+        
+    public static function delWP($wpID){
+      $sql="DELETE FROM wp WHERE wpID='{$wpID}';";
+      $res=self::$link->exec($sql);
+      return $res;
+    }
 }
 ?>
