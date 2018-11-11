@@ -57,8 +57,11 @@ PDOc::_connect();
       self::responseText($postObj,$keyword,$Content);
       $keyword='下节课';
       $Content=self::nextClass();
-      self::responseGetUserInfo($postObj);
       self::responseText($postObj,$keyword,$Content);
+      $keyword='新闻';
+      $Content=self::getNews();
+      self::responseText($postObj,$keyword,$Content);
+      self::responseGetUserInfo($postObj);
       self::responseWeather($postObj);
       self::responseACWeather($postObj);
       self::responseTranslate($postObj);
@@ -574,6 +577,28 @@ PDOc::_connect();
    //return 0;
    $html->clear();
    return $res;
+   }
+   
+   public static function getNews(){
+   	$url='http://news.163.com/pad/';
+   	$html=file_get_html($url);
+   	$res='';
+   	$i=0;
+   	foreach($html->find('div.mod_top_news2') as $row) {
+  			foreach($row->find('a') as $key){
+  			$i++;
+       		$res.=$i.'. '.$key."\r\n";
+   			/*
+    			echo $key->plaintext;
+       		echo '<br/>';
+       		echo $key->href;
+       		echo '<br/>';
+   			*/
+       	}
+   	}
+   	$html->clear();
+    	$res.='慢慢看哦~';
+    	return $res;
    }
    
    public static function getBaike($keyword){
