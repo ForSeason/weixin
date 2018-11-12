@@ -1,6 +1,8 @@
 <?php
 require('PDO.php');
 require('simple_html_dom.php');
+require('Tuling123.php');
+require('settings.php');
 PDOc::_connect();
   class weixin {
       
@@ -12,6 +14,8 @@ PDOc::_connect();
             <MsgType><![CDATA[%s]]></MsgType> 
             <Content><![CDATA[%s]]></Content> 
             </xml>";
+
+    public static $responded=false;
   
     public static function responseSubscribe($postObj){
       if (strtolower($postObj->Event=='subscribe')){
@@ -19,13 +23,15 @@ PDOc::_connect();
           $fromUser=$postObj->ToUserName;
           $time=time();
           $MsgType='text';
-          $Content='欢迎！输入“关键字”可以查看本公众号的功能，输入无关内容人家只会复读哦~';
+          $Content='欢迎！输入“关键字”可以查看本公众号的功能！';
           $template=self::$textTemplate;
           $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
           echo $info;
           //file_put_contents('log.txt',$info);
         }
     }
+
+
 
     public static function responseKeyWords($postObj){
       $keyword='关键字';
@@ -86,15 +92,37 @@ PDOc::_connect();
     }
 
 
-    public static function responseDefaut1($postObj){
-      $toUser=$postObj->FromUserName;
-      $fromUser=$postObj->ToUserName;
-      $time=time();
-      $MsgType='text';
-      $Content=$postObj->Content;
-      $template=self::$textTemplate;
-      $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
-      echo $info;
+    public static function responseTuling($postObj){
+      if (!self::$responded) {
+        $toUser=$postObj->FromUserName;
+        $fromUser=$postObj->ToUserName;
+        $time=time();
+        $MsgType='text';
+        $text=$postObj->Content;
+        settype($text,'string');
+        if (preg_match('/\/\:/',$text)==0) {
+          $weixinID=$postObj->FromUserName;
+          $selfInfo = [
+    		    'location' => [
+       	  	'city' => '广州'
+    		    ]
+	        ];
+          
+          $apiKey=TULING_APIKEY;
+          settype($apiKey,'string');
+          $secret=TULING_SECRET;
+          settype($secret,'string');
+	        $data=new Tuling123($apiKey,$secret,$weixinID,$selfInfo);
+	        $Content=$data->tuling($text);
+          
+         //$Content=TULING_APIKEY;
+        } else {
+          $Content=$postObj->Content;
+        }
+        $template=self::$textTemplate;
+        $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+        echo $info;
+        }
     }
 
     public static function responseDefaut2($postObj){
@@ -116,6 +144,7 @@ PDOc::_connect();
             $MsgType='text';
             $template=self::$textTemplate;
             $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
             echo $info;
           }
     }
@@ -145,6 +174,7 @@ PDOc::_connect();
           $MsgType='text';
           $template=self::$textTemplate;
           $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+          self::$responded=true;
           echo $info;
         }
       }
@@ -171,6 +201,7 @@ PDOc::_connect();
           $MsgType='text';
           $template=self::$textTemplate;
           $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+          self::$responded=true;
           echo $info;
         }
       }
@@ -200,6 +231,7 @@ PDOc::_connect();
           $MsgType='text';
           $template=self::$textTemplate;
           $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+          self::$responded=true;
           echo $info;
         }
       }
@@ -226,6 +258,7 @@ PDOc::_connect();
           $MsgType='text';
           $template=self::$textTemplate;
           $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+          self::$responded=true;
           echo $info;
         }
       }
@@ -242,6 +275,7 @@ PDOc::_connect();
             $MsgType='text';
             $template=self::$textTemplate;
             $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
             echo $info;
       }
       $str=$postObj->Content;
@@ -258,6 +292,7 @@ PDOc::_connect();
             $MsgType='text';
             $template=self::$textTemplate;
             $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
             echo $info;
       }
     }
@@ -273,6 +308,7 @@ PDOc::_connect();
             $MsgType='text';
             $template=self::$textTemplate;
             $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
             echo $info;
       }
       $str=$postObj->Content;
@@ -290,6 +326,7 @@ PDOc::_connect();
             $MsgType='text';
             $template=self::$textTemplate;
             $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
             echo $info;
       }
     }
@@ -310,6 +347,7 @@ PDOc::_connect();
             $MsgType='text';
             $template=self::$textTemplate;
             $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
             echo $info;
           }
     }
@@ -331,6 +369,7 @@ PDOc::_connect();
                  $MsgType='text';
                  $template=self::$textTemplate;
                  $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+                 self::$responded=true;
                  echo $info;
             }
           }
@@ -351,6 +390,7 @@ PDOc::_connect();
             $MsgType='text';
             $template=self::$textTemplate;
             $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
             echo $info;
       }
     }
@@ -373,6 +413,7 @@ PDOc::_connect();
             $MsgType='text';
             $template=self::$textTemplate;
             $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
             echo $info;
           }
     }
@@ -390,6 +431,7 @@ PDOc::_connect();
             $MsgType='text';
             $template=self::$textTemplate;
             $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
             echo $info;
           }
     }
@@ -408,6 +450,7 @@ PDOc::_connect();
             $MsgType='text';
             $template=self::$textTemplate;
             $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
             echo $info;
           }
     }
@@ -427,6 +470,7 @@ PDOc::_connect();
         $MsgType='text';
         $template=self::$textTemplate;
         $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+        self::$responded=true;
         echo $info;
       }
     }
@@ -622,7 +666,7 @@ PDOc::_connect();
    
 
     public static function record($postObj){
-      $filename='log/log3.txt';
+      $filename='log/log4.txt';
       $fileContent=date("Y-m-d H:i:s",time()).' '.PDOc::getUsername($postObj->FromUserName).' '.$postObj->Content;
       file_put_contents($filename,$fileContent."\r\n",FILE_APPEND);
     }
@@ -631,7 +675,9 @@ PDOc::_connect();
       $handle=fopen($filename,'r');
       $str='';
       while (!feof($handle)) {
-        $str.=fgets($handle);
+        $tmp=fgets($handle);
+        $pattern='/^~~/';
+        if (preg_match($pattern,$tmp)==0) $str.=$tmp;
       }
       return $str;
     }

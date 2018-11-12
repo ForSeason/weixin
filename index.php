@@ -27,7 +27,7 @@ require('weixin.php');
 
       if (strtolower($postObj->MsgType)=='text') {
           weixin::responseKeyWords($postObj);
-          weixin::responseDefaut1($postObj);     
+          weixin::responseTuling($postObj);     
       }
 
       if (strtolower($postObj->MsgType)=='image') {
