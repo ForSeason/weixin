@@ -102,6 +102,10 @@ class PDOc{
       if (preg_match($pattern,$str)<>0) return self::checkOneDP(preg_replace($pattern,'$1',$str));
       $pattern='/^查询 文体分 (.*)$/';
       if (preg_match($pattern,$str)<>0) return self::checkOneWP(preg_replace($pattern,'$1',$str));
+      $pattern='/^查询 事件$/';
+      if (preg_match($pattern,$str)<>0) return self::checkEvents();
+      $pattern='/^查询 事件 (.*)$/';
+      if (preg_match($pattern,$str)<>0) return self::checkEvent(preg_replace($pattern,'$1',$str));
       return '格式错误.';
      }
       
@@ -122,6 +126,50 @@ class PDOc{
       if (preg_match($pattern,$str)<>0) return self::checkMyWP($weixinID);
       return '格式错误.';
      }
+      
+    public static function checkEvents(){
+      $res='德育分:'."\r\n\r\n";
+      $sql='SELECT * FROM dp;';
+      $stmt=self::$link->query($sql);
+      $arr=array();
+      foreach ($stmt as $row) {
+        if (!array_key_exists($row['info'],$arr)) {
+          $arr[$row['info']]=1;
+        }
+      }
+      foreach ($arr as $info => $names) {
+        $res.=$info."\r\n";
+      }
+      $res.="-------------------\r\n";
+      $res.='文体分:'."\r\n\r\n";
+      $sql='SELECT * FROM wp;';
+      $stmt=self::$link->query($sql);
+      $arr=array();
+      foreach ($stmt as $row) {
+        if (!array_key_exists($row['info'],$arr)) {
+          $arr[$row['info']]=1;
+        }
+      }
+      foreach ($arr as $info => $names) {
+        $res.=$info."\r\n";
+      }
+      return $res;
+    }
+     
+    public static function checkEvent($info){
+      $sql="SELECT weixinID FROM dp WHERE info='{$info}';";
+      $stmt=self::$link->query($sql);
+      $res='';
+      foreach ($stmt as $row) {
+        $res.=self::getUsername($row['weixinID'])."\r\n";
+      }
+      $sql="SELECT * FROM wp WHERE info='{$info}';";
+      $stmt=self::$link->query($sql);
+      foreach ($stmt as $row) {
+        $res.=self::getUsername($row['weixinID'])."\r\n";
+      }
+      return $res;
+    } 
 
     public static function findDomitoryAll($dmt){
       $str=strtoupper($dmt);

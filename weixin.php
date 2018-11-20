@@ -79,15 +79,11 @@ PDOc::_connect();
       self::responseDelWP($postObj);
       //self::responseRegister($postObj);
       //self::responseClose($postObj);
-      $keyword='主赛日报名';
-      $filename='log/zhusairiSignUp.txt';
-      self::responseSignUp($postObj,$keyword,$filename);
-      $keyword='三人篮报名';
-      $filename='log/sanrenlanSignUp.txt';
+      $keyword='讲座报名';
+      $filename='log/jiangzuoSignUp.txt';
       self::responseSignUp($postObj,$keyword,$filename);
       $keyword='查看报名';
-      $Content="主赛日：\r\n".self::readFile('log/zhusairiSignUp.txt');
-      $Content.="三人篮：\r\n". self::readFile('log/sanrenlanSignUp.txt');
+      $Content="讲座：\r\n".self::readFile('log/jiangzuoSignUp.txt');
       self::responseText($postObj,$keyword,$Content);
     }
 
@@ -106,9 +102,7 @@ PDOc::_connect();
     		    'location' => [
        	  	'city' => '广州'
     		    ]
-	        ];
-          
-          $apiKey=TULING_APIKEY;
+	        ];          $apiKey=TULING_APIKEY;
           settype($apiKey,'string');
           $secret=TULING_SECRET;
           settype($secret,'string');
