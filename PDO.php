@@ -168,7 +168,11 @@ class PDOc{
       foreach ($stmt as $row) {
         $res.=self::getUsername($row['weixinID'])."\r\n";
       }
-      return $res;
+      if ($res=='') {
+        return 'No result.';
+      } else {
+        return $res;
+      }
     } 
 
     public static function findDomitoryAll($dmt){

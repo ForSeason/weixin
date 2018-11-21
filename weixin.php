@@ -79,11 +79,11 @@ PDOc::_connect();
       self::responseDelWP($postObj);
       //self::responseRegister($postObj);
       //self::responseClose($postObj);
-      $keyword='讲座报名';
-      $filename='log/jiangzuoSignUp.txt';
+      $keyword='出游报名';
+      $filename='log/chuyouSignUp.txt';
       self::responseSignUp($postObj,$keyword,$filename);
       $keyword='查看报名';
-      $Content="讲座：\r\n".self::readFile('log/jiangzuoSignUp.txt');
+      $Content="出游：\r\n".self::readFile('log/chuyouSignUp.txt');
       self::responseText($postObj,$keyword,$Content);
     }
 
