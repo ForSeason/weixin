@@ -17,9 +17,7 @@ require('weixin.php');
     }else{       
       $postArr=$GLOBALS['HTTP_RAW_POST_DATA'];
       $postObj=simplexml_load_string($postArr);
-      weixin::record($postObj);
-
-
+      PDOc::record($postObj);
       if (strtolower($postObj->MsgType=='event')){
         weixin::responseSubscribe($postObj);
       }

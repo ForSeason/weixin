@@ -179,11 +179,15 @@ class PDOc{
       $str=strtoupper($dmt);
       $domitory=substr($str,0,2);
       $room=substr($str,2,3);
-      $sql="SELECT username FROM user WHERE domitory='{$domitory}' AND room='{$room}';";
+      $sql="SELECT * FROM user WHERE domitory='{$domitory}' AND room='{$room}';";
       $stmt=self::$link->query($sql);
       $res='';
       foreach ($stmt as $row) {
-        $res.=$row['username']."\r\n";
+        if ($row['domitoryMaster']=='NO') {
+          $res.=$row['username']."\r\n";
+        } else {
+          $res.=$row['username']."(舍长)\r\n";
+        }
       }
       if ($res=='') {
         return 'No result.';
@@ -219,6 +223,7 @@ class PDOc{
         $res.='学号：'.$row['studentID']."\r\n";
         $res.='身份证号：'.$row['ID_card']."\r\n";
         $res.='宿舍：'.$row['domitory'].$row['room']."\r\n";
+        $res.='是否舍长：'.$row['domitoryMaster']."\r\n";
         $res.='电话：'.$row['phone']."\r\n";
         $res.='家长电话：'.$row['parentPhone']."\r\n";
         $res.='生源地：'.$row['fromWhere']."\r\n";
@@ -242,6 +247,7 @@ class PDOc{
         $res.='学号：'.$row['studentID']."\r\n";
         $res.='身份证号：'.$row['ID_card']."\r\n";
         $res.='宿舍：'.$row['domitory'].$row['room']."\r\n";
+        $res.='是否舍长：'.$row['domitoryMaster']."\r\n";
         $res.='电话：'.$row['phone']."\r\n";
         $res.='家长电话：'.$row['parentPhone']."\r\n";
         $res.='生源地：'.$row['fromWhere']."\r\n";
@@ -365,6 +371,27 @@ class PDOc{
       $sql="DELETE FROM wp WHERE wpID='{$wpID}';";
       $res=self::$link->exec($sql);
       return $res;
+    }
+
+    public static function refleshLog(){
+      $sql="SELECT * FROM log ORDER BY id DESC LIMIT 50;";
+      $stmt=self::$link->query($sql);
+      $res='';
+      foreach ($stmt as $row) {
+        $res.=$row['time'].' '.self::getUsername($row['weixinID']).' '.$row['content']."\r\n";
+      }
+      $res.='查询结束.';
+      file_put_contents('log/LOG.txt',$res);
+      return true;
+    }
+
+    public static function record($postObj){
+      $time=date("Y-m-d H:i:s",time());
+      $weixinID=$postObj->FromUserName;
+      $content=$postObj->Content;
+      $sql="INSERT INTO log(time,weixinID,content) VALUES(?,?,?);";
+      $stmt=self::$link->prepare($sql);
+      $stmt->execute(array($time,$weixinID,$content));
     }
 }
 ?>

@@ -66,6 +66,7 @@ PDOc::_connect();
       self::responseText($postObj,$keyword,$Content);
       $keyword='新闻';
       $Content=self::getNews();
+      self::responseRefleshLog($postObj);
       self::responseText($postObj,$keyword,$Content);
       self::responseGetUserInfo($postObj);
       self::responseWeather($postObj);
@@ -77,8 +78,8 @@ PDOc::_connect();
       self::responseAddWP($postObj);
       self::responseDelDP($postObj);
       self::responseDelWP($postObj);
-      //self::responseRegister($postObj);
-      //self::responseClose($postObj);
+      self::responseRegister($postObj);
+      self::responseClose($postObj);
       $keyword='出游报名';
       $filename='log/chuyouSignUp.txt';
       self::responseSignUp($postObj,$keyword,$filename);
@@ -117,6 +118,24 @@ PDOc::_connect();
         $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
         echo $info;
         }
+    }
+
+    public static function responseRefleshLog($postObj){
+      if ($postObj->Content=='刷新日志'){
+        $res=PDOc::refleshLog();
+        $toUser=$postObj->FromUserName;
+        $fromUser=$postObj->ToUserName;
+        $time=time();
+        $MsgType='text';
+        if ($res==true) {
+          $Content='Done.';
+        } else {
+          $Content='Failed.';
+        }
+        $template=self::$textTemplate;
+        $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+        echo $info;
+      }
     }
 
     public static function responseDefaut2($postObj){
@@ -658,12 +677,6 @@ PDOc::_connect();
    }
 
    
-
-    public static function record($postObj){
-      $filename='log/log4.txt';
-      $fileContent=date("Y-m-d H:i:s",time()).' '.PDOc::getUsername($postObj->FromUserName).' '.$postObj->Content;
-      file_put_contents($filename,$fileContent."\r\n",FILE_APPEND);
-    }
 
     public static function readFile($filename){
       $handle=fopen($filename,'r');
