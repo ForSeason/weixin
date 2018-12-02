@@ -275,7 +275,7 @@ class PDOc{
         $res.=($row['username']==$username)?'':$row['username']."\r\n";
       }
       if ($res=='') {
-        return '你...莫得老乡...';
+        return 'No result.';
       } else {
         return $res."查询结束.";
       }
