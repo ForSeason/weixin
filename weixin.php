@@ -16,6 +16,33 @@ PDOc::_connect();
             </xml>";
 
     public static $responded=false;
+    
+    
+    public static function getAccessToken(){
+        $url='https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid='.APPID.'&secret='.APPSECRET;
+        $json=file_get_contents($url);
+        $arr=json_decode($json,TRUE);
+        return $arr['access_token'];
+    }
+    
+    public static function uploadImage($pic){
+        $type="image"; 
+        $filedata=array("image"=>"@".$pic);
+        $url="https://api.weixin.qq.com/cgi-bin/media/upload?access_token=".self::getAccessToken()."&type=".$type;
+        $curl=curl_init();
+        curl_setopt($curl,CURLOPT_URL,$url);
+        if (!empty($filedata)){
+            curl_setopt($curl,CURLOPT_POST,1);
+            curl_setopt($curl,CURLOPT_POSTFIELDS,$filedata);
+        }
+        curl_setopt($curl,CURLOPT_RETURNTRANSFER,1);
+        $output=curl_exec($curl);
+        curl_close($curl);
+        file_put_contents('test.txt',$output);
+        return 0;
+        return $output;
+    }
+    
   
     public static function responseSubscribe($postObj){
       if (strtolower($postObj->Event=='subscribe')){
@@ -31,7 +58,7 @@ PDOc::_connect();
         }
     }
 
-
+          
 
     public static function responseKeyWords($postObj){
       $keyword='关键字';
@@ -66,8 +93,12 @@ PDOc::_connect();
       self::responseText($postObj,$keyword,$Content);
       $keyword='新闻';
       $Content=self::getNews();
-      self::responseRefleshLog($postObj);
       self::responseText($postObj,$keyword,$Content);
+      $keyword='测试';
+      //$Content=self::getAccessToken();
+      $Content=self::uploadImage('1.pic');
+      self::responseText($postObj,$keyword,$Content);
+      self::responseRefleshLog($postObj);
       self::responseGetUserInfo($postObj);
       self::responseWeather($postObj);
       self::responseACWeather($postObj);
