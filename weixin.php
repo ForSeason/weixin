@@ -7,13 +7,46 @@ PDOc::_connect();
   class weixin {
       
   
-    public static $textTemplate="<xml> 
+    public static $textTemplate="
+        <xml> 
             <ToUserName><![CDATA[%s]]></ToUserName> 
             <FromUserName><![CDATA[%s]]></FromUserName> 
             <CreateTime>%s</CreateTime> 
             <MsgType><![CDATA[%s]]></MsgType> 
             <Content><![CDATA[%s]]></Content> 
-            </xml>";
+        </xml>";
+
+    public static $musicTemplate="
+        <xml>
+            <ToUserName><![CDATA[%s]]></ToUserName>
+            <FromUserName><![CDATA[%s]]></FromUserName>
+            <CreateTime>%s</CreateTime>
+            <MsgType><![CDATA[%s]]></MsgType>
+            <Music>
+                <Title><![CDATA[%s]]></Title>
+                <Description><![CDATA[%s]]></Description>
+                <MusicUrl><![CDATA[%s]]></MusicUrl>
+                <HQMusicUrl><![CDATA[%s]]></HQMusicUrl>
+                <ThumbMediaId><![CDATA[%s]]></ThumbMediaId>
+            </Music>
+        </xml>";
+        
+    public static $newsTemplate="
+        <xml>
+            <ToUserName><![CDATA[%s]]></ToUserName>
+            <FromUserName><![CDATA[%s]]></FromUserName>
+            <CreateTime>%s</CreateTime>
+            <MsgType><![CDATA[%s]]></MsgType>
+            <ArticleCount>1</ArticleCount>
+            <Articles>
+                <item>
+                    <Title><![CDATA[%s]]></Title> 
+                    <Description><![CDATA[%s]]></Description>
+                    <PicUrl><![CDATA[%s]]></PicUrl>
+                    <Url><![CDATA[%s]]></Url>
+                </item>
+            </Articles>
+        </xml>";
 
     public static $responded=false;
     
@@ -25,24 +58,25 @@ PDOc::_connect();
         return $arr['access_token'];
     }
     
-    public static function uploadImage($pic){
-        $type="image"; 
-        $filedata=array("image"=>"@".$pic);
+    public static function uploadThumb(){
+        $type="thumb"; 
+        //$data=file_get_contents($url);
+        //file_put_contents($filename,$data);
+        $filedata=array("thumb"=>"@pic/thumb.jpg");
         $url="https://api.weixin.qq.com/cgi-bin/media/upload?access_token=".self::getAccessToken()."&type=".$type;
         $curl=curl_init();
         curl_setopt($curl,CURLOPT_URL,$url);
         if (!empty($filedata)){
-            curl_setopt($curl,CURLOPT_POST,1);
+            curl_setopt($curl,CURLOPT_POST,TRUE);
             curl_setopt($curl,CURLOPT_POSTFIELDS,$filedata);
         }
         curl_setopt($curl,CURLOPT_RETURNTRANSFER,1);
-        $output=curl_exec($curl);
+        $json=curl_exec($curl);
         curl_close($curl);
-        file_put_contents('test.txt',$output);
-        return 0;
-        return $output;
+        $arr=json_decode($json,TRUE);
+        return $arr['thumb_media_id'];
+        //return $json;
     }
-    
   
     public static function responseSubscribe($postObj){
       if (strtolower($postObj->Event=='subscribe')){
@@ -50,7 +84,7 @@ PDOc::_connect();
           $fromUser=$postObj->ToUserName;
           $time=time();
           $MsgType='text';
-          $Content='欢迎！输入“关键字”可以查看本公众号的功能！';
+          $Content='欢迎！输入“使用手册”可以查看本公众号的功能！';
           $template=self::$textTemplate;
           $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
           echo $info;
@@ -61,12 +95,15 @@ PDOc::_connect();
           
 
     public static function responseKeyWords($postObj){
+      /*
       $keyword='关键字';
       $Content=self::readFile('contents/keywords.txt');
       self::responseText($postObj,$keyword,$Content);
       $keyword='关键词';
       $Content=self::readFile('contents/keywords.txt');
       self::responseText($postObj,$keyword,$Content);
+      */
+      self::responseInstructions($postObj);
       $keyword='教材';
       $Content=self::readFile('contents/textbooks.txt');
       self::responseText($postObj,$keyword,$Content);
@@ -94,10 +131,7 @@ PDOc::_connect();
       $keyword='新闻';
       $Content=self::getNews();
       self::responseText($postObj,$keyword,$Content);
-      $keyword='测试';
-      //$Content=self::getAccessToken();
-      $Content=self::uploadImage('1.pic');
-      self::responseText($postObj,$keyword,$Content);
+      self::responseMusic($postObj);
       self::responseRefleshLog($postObj);
       self::responseGetUserInfo($postObj);
       self::responseWeather($postObj);
@@ -111,14 +145,152 @@ PDOc::_connect();
       self::responseDelWP($postObj);
       //self::responseRegister($postObj);
       //self::responseClose($postObj);
-      $keyword='出游报名';
-      $filename='log/chuyouSignUp.txt';
-      self::responseSignUp($postObj,$keyword,$filename);
       $keyword='查看报名';
       $Content="出游：\r\n".self::readFile('log/chuyouSignUp.txt');
       self::responseText($postObj,$keyword,$Content);
     }
 
+    
+    public static function randSong($postObj,$filename){
+        $json=file_get_contents($filename);
+        $arr=json_decode($json,TRUE);
+        $break=rand(1,count($arr['Body']));
+        $i=0;
+        foreach ($arr['Body'] as $song) {
+            $i++;
+            if ($i>$break) {
+                $res=$song;
+                break;
+            }
+        }
+        $toUser=$postObj->FromUserName;
+        $fromUser=$postObj->ToUserName;
+        $time=time();
+        $MsgType='music';
+        $template=self::$musicTemplate;
+        $TITLE=$res['title'];
+        $DESCRIPTION=$res['author'];
+        $MUSIC_Url='http://music.163.com/song/media/outer/url?id='.$res['id'].'.mp3';
+        $HQ_MUSIC_Url='http://music.163.com/song/media/outer/url?id='.$res['id'].'.mp3';
+        $media_id=self::uploadThumb();
+        $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$TITLE,$DESCRIPTION,$MUSIC_Url,$HQ_MUSIC_Url,$media_id);
+        echo $info;
+    }
+
+
+
+    public static function findSong($postObj,$songname){
+        $url='https://api.mlwei.com/music/api/wy/?key=523077333&id='.urlencode($songname).'&type=so&cache=0&nu=1';
+        $json=file_get_contents($url);
+        $arr=json_decode($json,TRUE);
+        $break=0;
+        $i=0;
+        foreach ($arr['Body'] as $song) {
+            $i++;
+            if ($i>$break) {
+                $res=$song;
+                break;
+            }
+        }
+        $toUser=$postObj->FromUserName;
+        $fromUser=$postObj->ToUserName;
+        $time=time();
+        $MsgType='music';
+        $template=self::$musicTemplate;
+        $TITLE=$res['title'];
+        $DESCRIPTION=$res['author'];
+        $MUSIC_Url='http://music.163.com/song/media/outer/url?id='.$res['id'].'.mp3';
+        $HQ_MUSIC_Url='http://music.163.com/song/media/outer/url?id='.$res['id'].'.mp3';
+        $media_id=self::uploadThumb();
+        $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$TITLE,$DESCRIPTION,$MUSIC_Url,$HQ_MUSIC_Url,$media_id);
+        echo $info;
+    }
+
+
+    public static function responseMusic($postObj){
+        $str=$postObj->Content;
+        $pattern='/^音乐/';
+        
+        if (preg_match($pattern,$str)<>0) {
+            $pattern='/^音乐 华语$/';
+            if (preg_match($pattern,$str)<>0) {
+                $filename='songlist/songlist_huayu.json';
+                self::randSong($postObj,$filename);
+                self::$responded=true;
+            }
+            $pattern='/^音乐 日语$/';
+            if (preg_match($pattern,$str)<>0) {
+                $filename='songlist/songlist_riyu.json';
+                self::randSong($postObj,$filename);
+                self::$responded=true;
+            }
+            $pattern='/^音乐 韩语$/';
+            if (preg_match($pattern,$str)<>0) {
+                $filename='songlist/songlist_hanyu.json';
+                self::randSong($postObj,$filename);
+                self::$responded=true;
+            }
+            $pattern='/^音乐 英语$/';
+            if (preg_match($pattern,$str)<>0) {
+                $filename='songlist/songlist_yingyu.json';
+                self::randSong($postObj,$filename);
+                self::$responded=true;
+            }
+            $pattern='/^音乐 acg$/';
+            if (preg_match($pattern,$str)<>0) {
+                $filename='songlist/songlist_acg.json';
+                self::randSong($postObj,$filename);
+                self::$responded=true;
+            }
+            $pattern='/^音乐 鬼畜$/';
+            if (preg_match($pattern,$str)<>0) {
+                $filename='songlist/songlist_guichu.json';
+                self::randSong($postObj,$filename);
+                self::$responded=true;
+            }
+            $pattern='/^音乐 粤语$/';
+            if (preg_match($pattern,$str)<>0) {
+                $filename='songlist/songlist_yueyu.json';
+                self::randSong($postObj,$filename);
+                self::$responded=true;
+            }
+            $pattern='/^音乐 v家$/i';
+            if (preg_match($pattern,$str)<>0) {
+                $filename='songlist/songlist_vocaloid.json';
+                self::randSong($postObj,$filename);
+                self::$responded=true;
+            }
+            $pattern='/^音乐 轻音乐$/';
+            if (preg_match($pattern,$str)<>0) {
+                $filename='songlist/songlist_qing.json';
+                self::randSong($postObj,$filename);
+                self::$responded=true;
+            }
+            $pattern='/^音乐$/';
+            if (preg_match($pattern,$str)<>0) {
+                $filename='songlist/mySonglist.json';
+                self::randSong($postObj,$filename);
+                self::$responded=true;
+            }
+            $Content='关键词有：华语、日语、韩语、英语、粤语、acg、鬼畜、v家和轻音乐哦！';
+            $toUser=$postObj->FromUserName;
+            $fromUser=$postObj->ToUserName;
+            $time=time();
+            $MsgType='text';
+            $template=self::$textTemplate;
+            $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
+            echo $info;
+        }
+        $pattern='/^点歌 (.*)$/';
+        if (preg_match($pattern,$str)<>0) {
+            $songname=preg_replace($pattern,'$1',$str);
+            self::findSong($postObj,$songname);
+            self::$responded=true;
+        }
+        
+    }
+    
 
     public static function responseTuling($postObj){
       if (!self::$responded) {
@@ -167,6 +339,22 @@ PDOc::_connect();
         $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
         echo $info;
       }
+    }
+        
+    public static function responseInstructions($postObj){
+        if ($postObj->Content=='使用手册') {
+            $toUser=$postObj->FromUserName;
+            $fromUser=$postObj->ToUserName;
+            $time=time();
+            $MsgType='news';
+            $Title='复读姬使用手册';
+            $Description='给不会使用这个公众号的你——';
+            $PicUrl='http://mmbiz.qpic.cn/mmbiz_jpg/NtzSic72E5kDJ213QWXw2eKI7QRkV3EkwUia9RaMH7nKyIVsm8AvUKROlq3LpnMs78UltnV2Lpg7AIEx4T6DuBGA/0?wx_fmt=jpeg';
+            $Url='https://mp.weixin.qq.com/s/THWKnDCSp6Do57q5kGQpOg';
+            $template=self::$newsTemplate;
+            $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Title,$Description,$PicUrl,$Url);
+            echo $info;
+        }
     }
 
     public static function responseDefaut2($postObj){
@@ -689,6 +877,7 @@ PDOc::_connect();
     	return $res;
    }
    
+
    public static function getBaike($keyword){
    $res='';
    $url='https://baike.baidu.com/item/'.urlencode($keyword);
@@ -719,6 +908,5 @@ PDOc::_connect();
       }
       return $str;
     }
-
   }
 ?>
