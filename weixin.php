@@ -3,6 +3,7 @@ require('PDO.php');
 require('simple_html_dom.php');
 require('Tuling123.php');
 require('settings.php');
+require('vote.php');
 PDOc::_connect();
   class weixin {
       
@@ -48,6 +49,17 @@ PDOc::_connect();
             </Articles>
         </xml>";
 
+    public static $picTemplate="
+        <xml>
+            <ToUserName><![CDATA[%s]]></ToUserName>
+            <FromUserName><![CDATA[%s]]></FromUserName>
+            <CreateTime>%s</CreateTime>
+            <MsgType><![CDATA[%s]]></MsgType>
+            <Image>
+                <MediaId><![CDATA[%s]]></MediaId>
+            </Image>
+        </xml>";
+
     public static $responded=false;
     
     
@@ -75,6 +87,26 @@ PDOc::_connect();
         curl_close($curl);
         $arr=json_decode($json,TRUE);
         return $arr['thumb_media_id'];
+        //return $json;
+    }
+
+    public static function uploadPic($filename){
+        $type="image"; 
+        //$data=file_get_contents($url);
+        //file_put_contents($filename,$data);
+        $filedata=array("image"=>"@pic/".$filename);
+        $url="https://api.weixin.qq.com/cgi-bin/media/upload?access_token=".self::getAccessToken()."&type=".$type;
+        $curl=curl_init();
+        curl_setopt($curl,CURLOPT_URL,$url);
+        if (!empty($filedata)){
+            curl_setopt($curl,CURLOPT_POST,TRUE);
+            curl_setopt($curl,CURLOPT_POSTFIELDS,$filedata);
+        }
+        curl_setopt($curl,CURLOPT_RETURNTRANSFER,1);
+        $json=curl_exec($curl);
+        curl_close($curl);
+        $arr=json_decode($json,TRUE);
+        return $arr['media_id'];
         //return $json;
     }
   
@@ -107,14 +139,23 @@ PDOc::_connect();
       $keyword='教材';
       $Content=self::readFile('contents/textbooks.txt');
       self::responseText($postObj,$keyword,$Content);
+      /*
       $keyword='课程表';
       $Content="下一节课是:\n".self::nextClass()."\n\n".self::timeTable();
       self::responseText($postObj,$keyword,$Content);
       $keyword='课表';
       $Content="下一节课是:\n".self::nextClass()."\n\n".self::timeTable();
       self::responseText($postObj,$keyword,$Content);
+      $keyword='考试';
+      $Content="下一场考试是:\n".self::nextClass()."\n\n".self::timeTable();
+      self::responseText($postObj,$keyword,$Content);
+      */
       $keyword='软件';
       $Content=self::readFile('contents/software.txt');
+      self::responseText($postObj,$keyword,$Content);
+      $keyword='查看所有投票';
+      $Content=vote::find_all_votes();
+      $Content=($Content == array())? 'No result.': implode(', ', $Content);
       self::responseText($postObj,$keyword,$Content);
       $keyword='作业';
       $Content=self::readFile('contents/homework.txt');
@@ -122,15 +163,23 @@ PDOc::_connect();
       $keyword='作业栏';
       $Content=self::readFile('contents/homework.txt');
       self::responseText($postObj,$keyword,$Content);
+      /*
       $keyword='下一节课';
       $Content=self::nextClass();
       self::responseText($postObj,$keyword,$Content);
       $keyword='下节课';
       $Content=self::nextClass();
       self::responseText($postObj,$keyword,$Content);
+      */
       $keyword='新闻';
       $Content=self::getNews();
       self::responseText($postObj,$keyword,$Content);
+      //$keyword='test';
+      //$Content=self::uploadPic('test.jpg');
+      //self::responseText($postObj,$keyword,$Content);
+      $pic = 'pay_QRcode.jpg';
+      $keyword = '付款';
+      self::responsePic($postObj, $keyword, $pic);
       self::responseMusic($postObj);
       self::responseRefleshLog($postObj);
       self::responseGetUserInfo($postObj);
@@ -139,15 +188,21 @@ PDOc::_connect();
       self::responseTranslate($postObj);
       self::responseBaike($postObj);
       self::responseFeedback($postObj);
+      //self::responseBaobei($postObj);
       self::responseAddDP($postObj);
       self::responseAddWP($postObj);
       self::responseDelDP($postObj);
       self::responseDelWP($postObj);
+      self::responseVote($postObj);
+      self::responseUnvote($postObj);
+      self::responseViewVote($postObj);
+      self::responseCreateVote($postObj);
+      self::responseDeleteVote($postObj);
       //self::responseRegister($postObj);
       //self::responseClose($postObj);
-      $keyword='查看报名';
-      $Content="出游：\r\n".self::readFile('log/chuyouSignUp.txt');
-      self::responseText($postObj,$keyword,$Content);
+      //$keyword='查看报名';
+      //$Content="出游：\r\n".self::readFile('log/chuyouSignUp.txt');
+      //self::responseText($postObj,$keyword,$Content);
     }
 
     
@@ -306,7 +361,8 @@ PDOc::_connect();
     		    'location' => [
        	  	'city' => '广州'
     		    ]
-	        ];          $apiKey=TULING_APIKEY;
+	        ];          
+          $apiKey=TULING_APIKEY;
           settype($apiKey,'string');
           $secret=TULING_SECRET;
           settype($secret,'string');
@@ -337,6 +393,19 @@ PDOc::_connect();
         }
         $template=self::$textTemplate;
         $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+        echo $info;
+      }
+    }
+
+    public static function responsePic($postObj, $keyword, $pic){
+      if ($postObj->Content==$keyword){
+        $toUser=$postObj->FromUserName;
+        $fromUser=$postObj->ToUserName;
+        $time=time();
+        $MsgType='image';
+        $media_id=self::uploadPic($pic);
+        $template=self::$picTemplate;
+        $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$media_id);
         echo $info;
       }
     }
@@ -562,7 +631,8 @@ PDOc::_connect();
             echo $info;
       }
     }
-            
+     
+    /*       
     public static function responseSignUp($postObj,$keyword,$filename){
       $weixinID=$postObj->FromUserName;
       if ($postObj->Content==$keyword) {
@@ -583,7 +653,7 @@ PDOc::_connect();
             echo $info;
           }
     }
-            
+    */       
 
     public static function responseFeedback($postObj){
       $Content='Recorded.';
@@ -605,6 +675,40 @@ PDOc::_connect();
                  echo $info;
             }
           }
+    }
+
+    public static function responseBaobei($postObj){
+      $Content='Recorded.';
+      $keyword='报备';
+      $filename='log/baobei.txt';
+      $pattern='/'.$keyword.' (.+)/';
+      $replacement='$1';
+      if (preg_match($pattern,$postObj->Content)<>0) {
+          if ($keyword.' '.preg_replace($pattern,$replacement,$postObj->Content)==$postObj->Content) {
+                 $toUser=$postObj->FromUserName;
+                 $fromUser=$postObj->ToUserName;
+                 if (PDOc::checkWeixinIDExistence($postObj->FromUserName)) {
+                   
+                 	 $studentID=PDOc::getStudentID($postObj->FromUserName);
+                 	 $name=PDOc::getUsername($postObj->FromUserName);
+                 	 $phone=PDOc::getPhone($postObj->FromUserName);
+                 	 $parentPhone=PDOc::getParentPhone($postObj->FromUserName);
+                 	 $sex=PDOc::getSex($postObj->FromUserName);
+                 	 $fileContent=strval($studentID).' '.strval($name).' '.strval($sex).' '.strval($phone).' '.strval($parentPhone).' '.preg_replace($pattern,$replacement,$postObj->Content);
+                   //$Content=$fileContent;
+                   file_put_contents($filename,$fileContent."\r\n",FILE_APPEND);
+
+                 } else {
+                 	 $Content='Failed.';
+                 }
+                 $time=time();
+                 $MsgType='text';
+                 $template=self::$textTemplate;
+                 $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+                 self::$responded=true;
+                 echo $info;
+         }
+     }
     }
 
     public static function responseClose($postObj){
@@ -649,6 +753,132 @@ PDOc::_connect();
             echo $info;
           }
     }
+            
+    public static function responseCreateVote($postObj){
+      $keyword='发起投票';
+      $pattern='/^'.$keyword.' ([\s\S]+)/';
+      $replacement='$1';
+      if (preg_match($pattern,$postObj->Content)<>0) {
+            $class = preg_replace($pattern, $replacement, $postObj->Content);
+            if (!PDOc::checkWeixinIDExistence($postObj->FromUserName)) {
+              $Content = 'Nothing to do.';
+            } else {
+              $obj_vote = new vote(PDOc::getUsername($postObj->FromUserName), $class);
+              $obj_vote->save();
+              $Content='Done.';
+            }
+            $toUser=$postObj->FromUserName;
+            $fromUser=$postObj->ToUserName;
+            $time=time();
+            $MsgType='text';
+            $template=self::$textTemplate;
+            $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
+            echo $info;
+          }
+    }
+              
+    public static function responseVote($postObj){
+      $keyword='投票';
+      $pattern='/^'.$keyword.' ([\s\S]+)/';
+      $replacement='$1';
+      if (preg_match($pattern,$postObj->Content)<>0) {
+            $class = preg_replace($pattern, $replacement, $postObj->Content);
+            if (!PDOc::checkWeixinIDExistence($postObj->FromUserName)) {
+              $Content='Nothing to do.';
+            } else {
+              $username = PDOc::getUsername($postObj->FromUserName);
+              $obj_vote = new vote($username, $class);
+              $Content  = $obj_vote->push();
+              $obj_vote->save();
+            }
+            $toUser=$postObj->FromUserName;
+            $fromUser=$postObj->ToUserName;
+            $time=time();
+            $MsgType='text';
+            $template=self::$textTemplate;
+            $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
+            echo $info;
+          }
+    }
+              
+    public static function responseDeleteVote($postObj){
+      $keyword='删除投票';
+      $pattern='/^'.$keyword.' ([\s\S]+)/';
+      $replacement='$1';
+      if (preg_match($pattern,$postObj->Content)<>0) {
+            $class = preg_replace($pattern, $replacement, $postObj->Content);
+            if (!PDOc::checkWeixinIDExistence($postObj->FromUserName)) {
+              $Content='Nothing to do.';
+            } else {
+              $username = PDOc::getUsername($postObj->FromUserName);
+              $obj_vote = new vote($username, $class);
+              $Content  = $obj_vote->destroy();
+            }
+            $toUser=$postObj->FromUserName;
+            $fromUser=$postObj->ToUserName;
+            $time=time();
+            $MsgType='text';
+            $template=self::$textTemplate;
+            $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
+            echo $info;
+          }
+    }
+              
+    public static function responseUnvote($postObj){
+      $keyword='撤销投票';
+      $pattern='/^'.$keyword.' ([\s\S]+)/';
+      $replacement='$1';
+      if (preg_match($pattern,$postObj->Content)<>0) {
+            $class = preg_replace($pattern, $replacement, $postObj->Content);
+            if (!PDOc::checkWeixinIDExistence($postObj->FromUserName)) {
+              $Content='Nothing to do.';
+            } else {
+              $username = PDOc::getUsername($postObj->FromUserName);
+              $obj_vote = new vote($username, $class);
+              $Content  = $obj_vote->pop();
+              $obj_vote->save();
+            }
+            $toUser=$postObj->FromUserName;
+            $fromUser=$postObj->ToUserName;
+            $time=time();
+            $MsgType='text';
+            $template=self::$textTemplate;
+            $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
+            echo $info;
+          }
+    }
+              
+    public static function responseViewVote($postObj){
+      $keyword='查看投票';
+      $pattern='/^'.$keyword.' ([\s\S]+)/';
+      $replacement='$1';
+      if (preg_match($pattern,$postObj->Content)<>0) {
+            $class = preg_replace($pattern, $replacement, $postObj->Content);
+            if (!PDOc::checkWeixinIDExistence($postObj->FromUserName)) {
+              $Content='Nothing to do.';
+            } else {
+              $username = PDOc::getUsername($postObj->FromUserName);
+              $obj_vote = new vote($username, $class);
+              
+              $Content  = '发起人: '.$obj_vote->creator."\r\n".count($obj_vote->list).'人: ';
+              $Content .= (implode(', ',$obj_vote->list) == '')?'no member': implode(', ',$obj_vote->list);
+            }
+            $toUser=$postObj->FromUserName;
+            $fromUser=$postObj->ToUserName;
+            $time=time();
+            $MsgType='text';
+            $template=self::$textTemplate;
+            $info=sprintf($template,$toUser,$fromUser,$time,$MsgType,$Content);
+            self::$responded=true;
+            echo $info;
+          }
+    }
+              
+    
             
     public static function responseTranslate($postObj){
       $str=$postObj->Content;
@@ -707,7 +937,7 @@ PDOc::_connect();
       }
     }
             
-            
+    /*
     public static function checkIfSignUp($weixinID,$filename){
       $username=PDOc::getUsername($weixinID);
       file_put_contents($filename,'',FILE_APPEND);
@@ -732,10 +962,10 @@ PDOc::_connect();
       }
       file_put_contents($filename,$str);
     }
-
+    */
 
     public static function timeTable(){
-      $Content="下一节课是:\n".self::nextClass();
+      $Content="下一场考试是:\n".self::nextClass();
       return self::readFile('contents/timetable.txt');
     }
 
