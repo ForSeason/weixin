@@ -10,15 +10,14 @@
             $this->username = $username;
             if (self::vote_exists($class)) {
                 // read from database
-                $this->class   = $class;
+                $this->class = $class;
                 $sql  = 'SELECT * FROM vote;';
                 $stmt = PDOc::$link->query($sql);
                 foreach ($stmt as $row) if ($row['class'] == $class) {
-                    $json    = $row['json'];
-                    $creator = $row['creator'];
+                    $json = $row['json'];
+                    $this->creator = $row['creator'];
                 }
-                $this->list    = json_decode($json);
-                $this->creator = $creator;
+                $this->list = json_decode($json);
             } else {
                 $this->creator = $username;
                 $this->class   = $class;
@@ -27,21 +26,23 @@
         }
         
         public function push(){
-            if (in_array($this->username, $this->list)) {
-                return 'error: Element exists.';
+            if (in_array($this->username, $this->list) or !self::vote_exists($this->class)) {
+                return false;
             } else {
-                $this->list[] = $this->username;
-                return 'Done.';
+                array_push($this->list, $this->username);
+                $this->list = array_values($this->list);
+                return true;
             }
         }
         
         public function pop(){
-            if (in_array($this->username, $this->list)) {
+            if (in_array($this->username, $this->list) and self::vote_exists($this->class)) {
                 $key = array_search($this->username, $this->list);
                 unset($this->list[$key]);
-                return 'Done.';
+                $this->list = array_values($this->list); 
+                return true;
             } else {
-                return 'error: Element not exists.';
+                return false;
             }
         }
         
@@ -80,12 +81,17 @@
         }
         
        public function destroy(){
-           if (self::vote_exists($this->class)) {
+           if (self::vote_exists($this->class) and ($this->username == $this->creator)) {
                $sql  = "DELETE FROM vote WHERE class=?;";
                $stmt = PDOc::$link->prepare($sql);
-               $res  = $stmt->execute(array($this->class));
-               return 'Done.';
-           } else return 'error: Vote not exists.';
+               $stmt->execute(array($this->class));
+               $res = $stmt->rowCount();
+               if ($res == 0) {
+                   return false;
+               } else {
+                   return true;
+               }
+           } else return false;
        }
     }
 ?>

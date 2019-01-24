@@ -763,9 +763,13 @@ PDOc::_connect();
             if (!PDOc::checkWeixinIDExistence($postObj->FromUserName)) {
               $Content = 'Nothing to do.';
             } else {
-              $obj_vote = new vote(PDOc::getUsername($postObj->FromUserName), $class);
-              $obj_vote->save();
-              $Content='Done.';
+              if (in_array(vote::find_all_votes(), $class)) {
+                $Content = 'Fatel error: Vote exists.';
+              } else {
+                $obj_vote = new vote(PDOc::getUsername($postObj->FromUserName), $class);
+                $obj_vote->save();
+                $Content='Done.';
+              }
             }
             $toUser=$postObj->FromUserName;
             $fromUser=$postObj->ToUserName;
@@ -789,8 +793,9 @@ PDOc::_connect();
             } else {
               $username = PDOc::getUsername($postObj->FromUserName);
               $obj_vote = new vote($username, $class);
-              $Content  = $obj_vote->push();
-              $obj_vote->save();
+              $status = $obj_vote->push();
+              if ($status) $obj_vote->save();
+              $Content = ($status)? 'Done.': 'Fatal error: Vote does not exist OR Element exists.';
             }
             $toUser=$postObj->FromUserName;
             $fromUser=$postObj->ToUserName;
@@ -814,7 +819,8 @@ PDOc::_connect();
             } else {
               $username = PDOc::getUsername($postObj->FromUserName);
               $obj_vote = new vote($username, $class);
-              $Content  = $obj_vote->destroy();
+              $status  = $obj_vote->destroy();
+              $Content = ($status)? 'Done.': 'Fatal error: Vote does not exists OR Permission denied.';
             }
             $toUser=$postObj->FromUserName;
             $fromUser=$postObj->ToUserName;
@@ -838,8 +844,9 @@ PDOc::_connect();
             } else {
               $username = PDOc::getUsername($postObj->FromUserName);
               $obj_vote = new vote($username, $class);
-              $Content  = $obj_vote->pop();
-              $obj_vote->save();
+              $status = $obj_vote->pop();
+              if ($status) $obj_vote->save();
+              $Content = ($status)? 'Done.': 'Fatal error: Element OR Vote does not exist.';
             }
             $toUser=$postObj->FromUserName;
             $fromUser=$postObj->ToUserName;
@@ -861,11 +868,15 @@ PDOc::_connect();
             if (!PDOc::checkWeixinIDExistence($postObj->FromUserName)) {
               $Content='Nothing to do.';
             } else {
-              $username = PDOc::getUsername($postObj->FromUserName);
-              $obj_vote = new vote($username, $class);
-              
-              $Content  = '发起人: '.$obj_vote->creator."\r\n".count($obj_vote->list).'人: ';
-              $Content .= (implode(', ',$obj_vote->list) == '')?'no member': implode(', ',$obj_vote->list);
+              if (vote::vote_exists($class)) {
+                $username = PDOc::getUsername($postObj->FromUserName);
+                $obj_vote = new vote($username, $class);
+                $Content  = '发起人: '.$obj_vote->creator."\r\n".count($obj_vote->list).'人: ';
+                //$Content .= $obj_vote->json();
+                $Content .= (implode(', ',$obj_vote->list) == '')?'no member': implode(', ',$obj_vote->list);
+              } else {
+                $Content = 'Fatal error: Vote does not exist.';
+              }
             }
             $toUser=$postObj->FromUserName;
             $fromUser=$postObj->ToUserName;
