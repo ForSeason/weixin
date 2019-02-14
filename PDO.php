@@ -62,6 +62,46 @@ class PDOc{
         return "Unknown(".$weixinID.")";
       }
     }
+
+    public static function getStudentID($weixinID){
+      if (self::checkWeixinIDExistence($weixinID)) {
+        $sql="SELECT * FROM user;";
+        $stmt=self::$link->query($sql);
+        foreach ($stmt as $row) if ($row['weixinID'] == $weixinID) return $row['studentID'];
+      } else {
+        return "Failed";
+      }
+    }
+
+    public static function getParentPhone($weixinID){
+      if (self::checkWeixinIDExistence($weixinID)) {
+        $sql="SELECT * FROM user;";
+        $stmt=self::$link->query($sql);
+        foreach ($stmt as $row) if ($row['weixinID'] == $weixinID) return $row['parentPhone'];
+      } else {
+        return "Failed.";
+      }
+    }
+
+    public static function getPhone($weixinID){
+      if (self::checkWeixinIDExistence($weixinID)) {
+        $sql="SELECT * FROM user;";
+        $stmt=self::$link->query($sql);
+        foreach ($stmt as $row) if ($row['weixinID'] == $weixinID) return $row['phone'];
+      } else {
+        return "Failed.";
+      }
+    }
+
+    public static function getSex($weixinID){
+      if (self::checkWeixinIDExistence($weixinID)) {
+        $sql="SELECT * FROM user;";
+        $stmt=self::$link->query($sql);
+        foreach ($stmt as $row) if ($row['weixinID'] == $weixinID) return $row['sex'];
+      } else {
+        return "Failed.";
+      }
+    }
         
     public static function getAllUsernames(){
     	$sql="SELECT username FROM user";
@@ -225,9 +265,12 @@ class PDOc{
         $res.='宿舍：'.$row['domitory'].$row['room']."\r\n";
         $res.='是否舍长：'.$row['domitoryMaster']."\r\n";
         $res.='电话：'.$row['phone']."\r\n";
+        $res.='家长姓名：'.$row['parentName']."\r\n";
         $res.='家长电话：'.$row['parentPhone']."\r\n";
         $res.='生源地：'.$row['fromWhere']."\r\n";
         $res.='政治面貌：'.$row['politicalStatus']."\r\n";
+        $res.='家庭住址：'.$row['adress']."\r\n";
+        $res.='邮政编码：'.$row['postalcode']."\r\n";
       }
       if ($res=='') {
         return 'No result.';
@@ -250,8 +293,11 @@ class PDOc{
         $res.='是否舍长：'.$row['domitoryMaster']."\r\n";
         $res.='电话：'.$row['phone']."\r\n";
         $res.='家长电话：'.$row['parentPhone']."\r\n";
+        $res.='家长姓名：'.$row['parentName']."\r\n";
         $res.='生源地：'.$row['fromWhere']."\r\n";
         $res.='政治面貌：'.$row['politicalStatus']."\r\n";
+        $res.='家庭住址：'.$row['adress']."\r\n";
+        $res.='邮政编码：'.$row['postalcode']."\r\n";
       }
       if ($res=='') {
         return 'No result.';
@@ -275,7 +321,7 @@ class PDOc{
         $res.=($row['username']==$username)?'':$row['username']."\r\n";
       }
       if ($res=='') {
-        return 'No result.';
+        return '你...莫得老乡...';
       } else {
         return $res."查询结束.";
       }
