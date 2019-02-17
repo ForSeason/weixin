@@ -1,9 +1,9 @@
 <?php
-require('PDO.php');
-require('simple_html_dom.php');
-require('Tuling123.php');
-require('settings.php');
-require('vote.php');
+require_once('PDO.php');
+require_once('simple_html_dom.php');
+require_once('Tuling123.php');
+require_once('settings.php');
+require_once('vote.php');
 PDOc::_connect();
   class weixin {
       
@@ -171,9 +171,9 @@ PDOc::_connect();
       $Content=self::nextClass();
       self::responseText($postObj,$keyword,$Content);
       */
-      $keyword='新闻';
-      $Content=self::getNews();
-      self::responseText($postObj,$keyword,$Content);
+      //$keyword='新闻';
+      //$Content=self::getNews();
+      //self::responseText($postObj,$keyword,$Content);
       //$keyword='test';
       //$Content=self::uploadPic('test.jpg');
       //self::responseText($postObj,$keyword,$Content);
