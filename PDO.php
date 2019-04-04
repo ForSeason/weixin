@@ -6,7 +6,7 @@ class PDOc{
 
   	public static function _connect(){  //链接数据库
   		try{
-  		    self::$link=new PDO(DATABASE_NAME, DATABASE_ID, DATABASE_PW);
+  		    self::$link=new PDO(DATABASE_NAME, DATABASE_ID, DATABASE_PW, array(PDO::MYSQL_ATTR_INIT_COMMAND=>'SET NAMES utf8'));
         	}catch(PDOException $e){
   		        self::throwException($e->getMessage()); 
         	}
